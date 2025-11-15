@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuseMood - Mood-Based Creative Recommendations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #06b6d4;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --border-radius: 12px;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #e2e8f0;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --accent-primary: #7c3aed;
+            --accent-secondary: #0891b2;
+            --accent-success: #059669;
+            --accent-warning: #d97706;
+            --accent-danger: #dc2626;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Header */
+        header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text .tagline {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            animation: slideInLeft 0.8s ease-out;
+        }
+
+        .panel-section {
+            margin-bottom: 24px;
+        }
+
+        .panel-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-section h3::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        /* Mood Picker */
+        .mood-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .mood-btn {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: var(--border-radius);
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .mood-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .mood-btn.active {
+            border-color: var(--accent-primary);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, transparent 100%);
+            color: var(--text-primary);
+        }
+
+        /* Inputs & Buttons */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--bg-secondary);
+            border-radius: var(--border-radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        /* Hero Canvas */
+        .hero-section {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        #heroCanvas {
+            width: 100%;
+            height: 300px;
+            display: block;
+            background: var(--bg-secondary);
+        }
+
+        .canvas-controls {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .result-card h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Songs List */
+        .song-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .song-item {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .song-item:hover {
+            transform: translateX(4px);
+            background: linear-gradient(90deg, var(--bg-secondary) 0%, var(--accent-primary) 100%);
+        }
+
+        .song-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .song-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Color Palette */
+        .palette-container {
+            display: flex;
+            height: 80px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .color-swatch {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .color-swatch:hover {
+            flex: 1.2;
+        }
+
+        /* Art Styles */
+        .art-styles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .art-style-item {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .art-canvas {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .art-style-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Audio Player */
+        .audio-player {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .audio-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+            background: var(--accent-secondary);
+        }
+
+        /* Footer */
+        footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 24px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--accent-primary);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Dialog */
+        dialog {
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            width: 90vw;
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .dialog-content {
+            padding: 24px;
+        }
+
+        .dialog-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .dialog-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .prompt-box {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">MM</div>
+                <div class="logo-text">
+                    <h1>MuseMood</h1>
+                    <div class="tagline">Creative inspiration based on your mood</div>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button id="themeToggle" class="btn btn-secondary" aria-label="Toggle theme">
+                    <span>🌙</span>
+                </button>
+                <button id="showPrompt" class="btn btn-secondary">AI Prompt</button>
+            </div>
+        </header>
+
+        <aside class="control-panel">
+            <div class="panel-section">
+                <h3>Mood Selection</h3>
+                <div class="mood-grid" id="moodGrid">
+                    <button class="mood-btn" data-mood="joy">😊 Joy</button>
+                    <button class="mood-btn" data-mood="sad">😢 Sad</button>
+                    <button class="mood-btn" data-mood="calm">😌 Calm</button>
+                    <button class="mood-btn" data-mood="angry">😠 Angry</button>
+                    <button class="mood-btn" data-mood="nostalgia">📻 Nostalgia</button>
+                    <button class="mood-btn" data-mood="romantic">💖 Romantic</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>Generation</h3>
+                <div class="input-group">
+                    <label for="seedInput">Seed (for reproducible results)</label>
+                    <input type="text" id="seedInput" placeholder="Enter any text or leave empty for random">
+                </div>
+                <div class="btn-group">
+                    <button id="generateBtn" class="btn btn-primary">
+                        <span>🎵</span> Generate
+                    </button>
+                    <button id="surpriseBtn" class="btn btn-secondary">
+                        <span>🎲</span> Surprise Me
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>Export</h3>
+                <div class="btn-group">
+                    <button id="exportJson" class="btn btn-secondary">JSON</button>
+                    <button id="exportPalette" class="btn btn-secondary">Palette</button>
+                    <button id="exportAudio" class="btn btn-secondary">Audio</button>
+                    <button id="exportSnapshot" class="btn btn-secondary">Snapshot</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>Keyboard Shortcuts</h3>
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.8;">
+                    <div>Enter = Generate</div>
+                    <div>S = Surprise Me</div>
+                    <div>E = Export JSON</div>
+                    <div>Space = Play/Pause Audio</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <section class="hero-section">
+                <canvas id="heroCanvas" width="1200" height="300"></canvas>
+                <div class="canvas-controls">
+                    <button id="pauseBtn" class="btn btn-secondary" style="padding: 8px 12px;">⏸️ Pause</button>
+                </div>
+            </section>
+
+            <div class="results-grid">
+                <section class="result-card">
+                    <h3>🎵 Recommended Songs</h3>
+                    <div class="song-list" id="songList">
+                        <div class="song-item">
+                            <div class="song-title">Select a mood to get recommendations</div>
+                            <div class="song-meta">Choose from the left panel to begin</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="result-card">
+                    <h3>🎨 Color Palette</h3>
+                    <div class="palette-container" id="paletteContainer">
+                        <div class="color-swatch" style="background: #64748b;">Click Generate</div>
+                    </div>
+                </section>
+
+                <section class="result-card">
+                    <h3>🎭 Art Styles</h3>
+                    <div class="art-styles" id="artStyles">
+                        <div class="art-style-item">
+                            <canvas class="art-canvas" width="100" height="60"></canvas>
+                            <div class="art-style-name">Select mood first</div>
+                        </div>
+                        <div class="art-style-item">
+                            <canvas class="art-canvas" width="100" height="60"></canvas>
+                            <div class="art-style-name">Select mood first</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="result-card">
+                    <h3>🎼 Audio Preview</h3>
+                    <div class="audio-player">
+                        <button id="playAudio" class="audio-btn">▶️</button>
+                        <div style="flex: 1;">
+                            <div style="font-size: 14px; margin-bottom: 4px;">Mood-based melody</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Click play to hear generated audio</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            <div>Made with ❤️ • MuseMood v1.0 • MIT License</div>
+            <div style="margin-top: 8px; font-size: 12px; opacity: 0.7;">
+                Educational demo - Simulated AI logic (no real ML models used)
+            </div>
+        </footer>
+    </div>
+
+    <dialog id="promptDialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>AI Prompt Used to Create MuseMood</h3>
+                <button id="closeDialog" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+            <div class="prompt-box" id="promptText"></div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="copyPrompt" class="btn btn-primary">Copy Prompt</button>
+                <button id="closeDialog2" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        // =============================================================================
+        // MUSE MOOD - Single File Web Application
+        // =============================================================================
+        // This is a self-contained web app that provides mood-based creative recommendations
+        // using simulated AI logic (deterministic algorithms) that work entirely offline.
+        //
+        // HOW TO USE:
+        // 1. Save this file as index.html
+        // 2. Open in a modern browser (Chrome/Firefox/Edge)
+        // 3. No server required - works completely offline
+        //
+        // WHERE TO PLUG IN REAL ML:
+        // - Song recommendations: Replace the deterministic selection with a trained model
+        // - Color palette generation: Use a color theory ML model instead of base + perturbation
+        // - Art style generation: Replace procedural art with style transfer or GAN outputs
+        // - Audio generation: Use music generation models instead of algorithmic composition
+        // =============================================================================
+
+        // AI Prompt for this application (shown in dialog)
+        const AI_PROMPT = `Build a single-file, production-ready index.html web app called "MuseMood" that runs entirely in the browser (no server required). The file must include all HTML, CSS and JavaScript inline and be ready to save + open locally. Focus on an engaging animated UI that recommends songs, color palettes, and art styles based on a user's mood. Do not call external ML APIs — implement lightweight, deterministic, on-page "mini-AI" logic (clearly labeled as simulated) so the app works offline.`;
+
+        // =============================================================================
+        // SEEDED PSEUDO-RANDOM NUMBER GENERATOR (for deterministic results)
+        // =============================================================================
+        // This ensures that the same mood + seed combination always produces the same output
+        // SIMULATED AI: In a real implementation, this would be replaced with model inference
+
+        function sdbmHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + (hash << 6) + (hash << 16) - hash;
+            }
+            return Math.abs(hash);
+        }
+
+        function createSeededRNG(seed) {
+            // Use xorshift algorithm for better distribution
+            let x = sdbmHash(seed) || Math.floor(Math.random() * 0xFFFFFFFF);
+            return function() {
+                x ^= x << 13;
+                x ^= x >>> 17;
+                x ^= x << 5;
+                return (x >>> 0) / 0xFFFFFFFF;
+            };
+        }
+
+        // =============================================================================
+        // SONG DATABASE & RECOMMENDATION LOGIC
+        // =============================================================================
+        // SIMULATED AI: In production, this would query a trained recommendation model
+
+        const songDatabase = [
+            // Joyful songs
+            { title: "Happy", artist: "Pharrell Williams", mood: "joy", genre: "Pop", energy: 0.9 },
+            { title: "Can't Stop the Feeling", artist: "Justin Timberlake", mood: "joy", genre: "Pop", energy: 0.8 },
+            { title: "Good Vibrations", artist: "The Beach Boys", mood: "joy", genre: "Rock", energy: 0.7 },
+            { title: "Walking on Sunshine", artist: "Katrina & The Waves", mood: "joy", genre: "Pop", energy: 0.8 },
+            { title: "Dancing Queen", artist: "ABBA", mood: "joy", genre: "Pop", energy: 0.7 },
+            
+            // Sad songs
+            { title: "Someone Like You", artist: "Adele", mood: "sad", genre: "Pop", energy: 0.3 },
+            { title: "Hurt", artist: "Johnny Cash", mood: "sad", genre: "Country", energy: 0.2 },
+            { title: "The Sound of Silence", artist: "Simon & Garfunkel", mood: "sad", genre: "Folk", energy: 0.4 },
+            { title: "Nothing Compares 2 U", artist: "Sinéad O'Connor", mood: "sad", genre: "Pop", energy: 0.3 },
+            { title: "Mad World", artist: "Gary Jules", mood: "sad", genre: "Alternative", energy: 0.2 },
+            
+            // Calm songs
+            { title: "Weightless", artist: "Marconi Union", mood: "calm", genre: "Ambient", energy: 0.1 },
+            { title: "Clair de Lune", artist: "Claude Debussy", mood: "calm", genre: "Classical", energy: 0.2 },
+            { title: "Bloom", artist: "The Paper Kites", mood: "calm", genre: "Indie", energy: 0.3 },
+            { title: "Holocene", artist: "Bon Iver", mood: "calm", genre: "Indie", energy: 0.4 },
+            { title: "To Build a Home", artist: "The Cinematic Orchestra", mood: "calm", genre: "Ambient", energy: 0.3 },
+            
+            // Angry songs
+            { title: "Killing in the Name", artist: "Rage Against the Machine", mood: "angry", genre: "Rock", energy: 0.9 },
+            { title: "Break Stuff", artist: "Limp Bizkit", mood: "angry", genre: "Rock", energy: 0.8 },
+            { title: "Given Up", artist: "Linkin Park", mood: "angry", genre: "Rock", energy: 0.9 },
+            { title: "Bulls on Parade", artist: "Rage Against the Machine", mood: "angry", genre: "Rock", energy: 0.8 },
+            { title: "Duality", artist: "Slipknot", mood: "angry", genre: "Metal", energy: 0.9 },
+            
+            // Nostalgic songs
+            { title: "Bohemian Rhapsody", artist: "Queen", mood: "nostalgia", genre: "Rock", energy: 0.7 },
+            { title: "Hotel California", artist: "Eagles", mood: "nostalgia", genre: "Rock", energy: 0.6 },
+            { title: "Sweet Child O' Mine", artist: "Guns N' Roses", mood: "nostalgia", genre: "Rock", energy: 0.7 },
+            { title: "Imagine", artist: "John Lennon", mood: "nostalgia", genre: "Rock", energy: 0.5 },
+            { title: "Like a Rolling Stone", artist: "Bob Dylan", mood: "nostalgia", genre: "Folk", energy: 0.6 },
+            
+            // Romantic songs
+            { title: "Perfect", artist: "Ed Sheeran", mood: "romantic", genre: "Pop", energy: 0.5 },
+            { title: "All of Me", artist: "John Legend", mood: "romantic", genre: "Pop", energy: 0.4 },
+            { title: "Thinking Out Loud", artist: "Ed Sheeran", mood: "romantic", genre: "Pop", energy: 0.5 },
+            { title: "At Last", artist: "Etta James", mood: "romantic", genre: "Jazz", energy: 0.4 },
+            { title: "Unchained Melody", artist: "The Righteous Brothers", mood: "romantic", genre: "Pop", energy: 0.3 }
+        ];
+
+        function getSongRecommendations(mood, rng, count = 3) {
+            // SIMULATED AI: This deterministic selection would be replaced with a trained model
+            const moodSongs = songDatabase.filter(song => song.mood === mood);
+            const otherSongs = songDatabase.filter(song => song.mood !== mood);
+            
+            const recommendations = [];
+            
+            // Pick 2 songs from the same mood
+            for (let i = 0; i < Math.min(2, moodSongs.length); i++) {
+                const index = Math.floor(rng() * moodSongs.length);
+                recommendations.push(moodSongs[index]);
+                moodSongs.splice(index, 1); // Avoid duplicates
+            }
+            
+            // Pick 1 song from related moods
+            if (otherSongs.length > 0) {
+                const index = Math.floor(rng() * otherSongs.length);
+                recommendations.push(otherSongs[index]);
+            }
+            
+            return recommendations.slice(0, count);
+        }
+
+        // =============================================================================
+        // COLOR PALETTE GENERATION
+        // =============================================================================
+        // SIMULATED AI: This would use a color theory model in production
+
+        const moodBasePalettes = {
+            joy: ['#FF6B6B', '#FFD166', '#06D6A0', '#118AB2', '#073B4C'],
+            sad: ['#6B7280', '#9CA3AF', '#CBD5E1', '#4B5563', '#1F2937'],
+            calm: ['#60A5FA', '#93C5FD', '#A5B4FC', '#C7D2FE', '#DBEAFE'],
+            angry: ['#DC2626', '#EF4444', '#F87171', '#991B1B', '#7F1D1D'],
+            nostalgia: ['#D97706', '#F59E0B', '#FBBF24', '#FCD34D', '#FEF3C7'],
+            romantic: ['#EC4899', '#F472B6', '#F9A8D4', '#DB2777', '#BE185D']
+        };
+
+        function generateColorPalette(mood, rng) {
+            // SIMULATED AI: Replace with ML color theory model
+            const basePalette = moodBasePalettes[mood] || moodBasePalettes.joy;
+            
+            return basePalette.map(color => {
+                // Perturb the color slightly based on seed
+                const hex = color.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+                
+                // Apply small random variations
+                const variation = 20;
+                const newR = Math.max(0, Math.min(255, r + (rng() * variation * 2 - variation)));
+                const newG = Math.max(0, Math.min(255, g + (rng() * variation * 2 - variation)));
+                const newB = Math.max(0, Math.min(255, b + (rng() * variation * 2 - variation)));
+                
+                return `#${Math.round(newR).toString(16).padStart(2, '0')}${Math.round(newG).toString(16).padStart(2, '0')}${Math.round(newB).toString(16).padStart(2, '0')}`;
+            });
+        }
+
+        // =============================================================================
+        // ART STYLE GENERATION
+        // =============================================================================
+        // SIMULATED AI: This procedural generation would be replaced with style transfer
+
+        const artStyles = ['Abstract', 'LineArt', 'Mosaic', 'Painterly', 'Geometric', 'Minimalist'];
+
+        function getArtStyles(mood, rng) {
+            // SIMULATED AI: Replace with style classification model
+            const moodStyleMap = {
+                joy: ['Abstract', 'Painterly'],
+                sad: ['Minimalist', 'LineArt'],
+                calm: ['Geometric', 'Minimalist'],
+                angry: ['Abstract', 'Painterly'],
+                nostalgia: ['Mosaic', 'Painterly'],
+                romantic: ['LineArt', 'Abstract']
+            };
+            
+            return moodStyleMap[mood] || ['Abstract', 'Minimalist'];
+        }
+
+        function drawArtStyle(canvas, style, rng) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            switch (style) {
+                case 'Abstract':
+                    // Draw abstract shapes
+                    for (let i = 0; i < 10; i++) {
+                        ctx.beginPath();
+                        ctx.fillStyle = `hsl(${rng() * 360}, 70%, 60%)`;
+                        ctx.arc(rng() * width, rng() * height, 10 + rng() * 20, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+                    
+                case 'LineArt':
+                    // Draw line art
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        ctx.moveTo(rng() * width, rng() * height);
+                        ctx.lineTo(rng() * width, rng() * height);
+                    }
+                    ctx.stroke();
+                    break;
+                    
+                case 'Mosaic':
+                    // Draw mosaic pattern
+                    const tileSize = 10;
+                    for (let x = 0; x < width; x += tileSize) {
+                        for (let y = 0; y < height; y += tileSize) {
+                            ctx.fillStyle = `hsl(${rng() * 360}, 50%, ${40 + rng() * 30}%)`;
+                            ctx.fillRect(x, y, tileSize - 1, tileSize - 1);
+                        }
+                    }
+                    break;
+                    
+                case 'Painterly':
+                    // Draw painterly strokes
+                    for (let i = 0; i < 15; i++) {
+                        ctx.fillStyle = `hsla(${rng() * 360}, 60%, 50%, 0.7)`;
+                        ctx.fillRect(rng() * width, rng() * height, 20 + rng() * 30, 5 + rng() * 10);
+                    }
+                    break;
+                    
+                case 'Geometric':
+                    // Draw geometric patterns
+                    ctx.fillStyle = `hsl(${rng() * 360}, 80%, 40%)`;
+                    ctx.fillRect(10, 10, width - 20, height - 20);
+                    
+                    ctx.fillStyle = `hsl(${(rng() * 360 + 180) % 360}, 80%, 70%)`;
+                    ctx.beginPath();
+                    ctx.moveTo(width / 2, 10);
+                    ctx.lineTo(width - 10, height / 2);
+                    ctx.lineTo(width / 2, height - 10);
+                    ctx.lineTo(10, height / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+                    
+                case 'Minimalist':
+                    // Draw minimalist composition
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(width * 0.2, height * 0.3, width * 0.6, 2);
+                    ctx.fillRect(width * 0.3, height * 0.5, 2, height * 0.3);
+                    break;
+            }
+        }
+
+        // =============================================================================
+        // AUDIO GENERATION
+        // =============================================================================
+        // SIMULATED AI: This algorithmic composition would be replaced with music generation models
+
+        let audioContext = null;
+        let currentOscillator = null;
+
+        function generateAudio(mood, rng) {
+            // SIMULATED AI: Replace with music generation model inference
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            if (currentOscillator) {
+                currentOscillator.stop();
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Mood-based scale selection
+            const scales = {
+                joy: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88], // C Major
+                sad: [261.63, 277.18, 311.13, 349.23, 369.99, 415.30, 466.16], // C Harmonic Minor
+                calm: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88], // C Major
+                angry: [261.63, 277.18, 311.13, 349.23, 369.99, 415.30, 466.16], // C Harmonic Minor
+                nostalgia: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88], // C Major
+                romantic: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88]  // C Major
+            };
+            
+            const scale = scales[mood] || scales.joy;
+            const melody = [];
+            
+            // Generate simple melody based on mood and seed
+            for (let i = 0; i < 8; i++) {
+                const noteIndex = Math.floor(rng() * scale.length);
+                melody.push(scale[noteIndex]);
+            }
+            
+            oscillator.type = 'sine';
+            gainNode.gain.value = 0.1;
+            
+            const now = audioContext.currentTime;
+            melody.forEach((frequency, index) => {
+                oscillator.frequency.setValueAtTime(frequency, now + index * 0.3);
+            });
+            
+            oscillator.start();
+            oscillator.stop(now + melody.length * 0.3);
+            
+            currentOscillator = oscillator;
+            return oscillator;
+        }
+
+        // =============================================================================
+        // HERO CANVAS ANIMATION
+        // =============================================================================
+
+        let animationId = null;
+        let isAnimating = true;
+
+        function initHeroCanvas() {
+            const canvas = document.getElementById('heroCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            return { canvas, ctx };
+        }
+
+        function animateHeroCanvas(ctx, canvas, mood, rng) {
+            if (!isAnimating) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Mood-based background gradient
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            
+            const moodColors = {
+                joy: ['#FF6B6B', '#FFD166', '#06D6A0'],
+                sad: ['#6B7280', '#9CA3AF', '#CBD5E1'],
+                calm: ['#60A5FA', '#93C5FD', '#A5B4FC'],
+                angry: ['#DC2626', '#EF4444', '#F87171'],
+                nostalgia: ['#D97706', '#F59E0B', '#FBBF24'],
+                romantic: ['#EC4899', '#F472B6', '#F9A8D4']
+            };
+            
+            const colors = moodColors[mood] || moodColors.joy;
+            gradient.addColorStop(0, colors[0]);
+            gradient.addColorStop(0.5, colors[1]);
+            gradient.addColorStop(1, colors[2]);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Animated particles based on mood
+            const particleCount = mood === 'calm' ? 20 : 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const x = (rng() * canvas.width + Date.now() * 0.01) % canvas.width;
+                const y = (rng() * canvas.height + Date.now() * 0.01) % canvas.height;
+                const size = 2 + rng() * 4;
+                
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + rng() * 0.4})`;
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            animationId = requestAnimationFrame(() => animateHeroCanvas(ctx, canvas, mood, rng));
+        }
+
+        // =============================================================================
+        // EXPORT FUNCTIONS
+        // =============================================================================
+
+        function exportJSON(recommendations, palette, artStyles) {
+            const data = {
+                timestamp: new Date().toISOString(),
+                recommendations,
+                palette,
+                artStyles,
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `musemood-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showConfetti();
+        }
+
+        function exportPalettePNG(palette) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 500;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            
+            const swatchWidth = canvas.width / palette.length;
+            
+            palette.forEach((color, index) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(index * swatchWidth, 0, swatchWidth, canvas.height);
+                
+                // Add color code text
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(color, index * swatchWidth + swatchWidth / 2, canvas.height - 20);
+            });
+            
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `palette-${Date.now()}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showConfetti();
+            });
+        }
+
+        function exportAudioWAV() {
+            // SIMULATED AI: In production, this would render the actual generated audio
+            alert('Audio export would render the generated melody as WAV. In this demo, this is simulated.');
+            showConfetti();
+        }
+
+        function exportSnapshot() {
+            const canvas = document.getElementById('heroCanvas');
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `snapshot-${Date.now()}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showConfetti();
+            });
+        }
+
+        function showConfetti() {
+            for (let i = 0; i < 50; i++) {
+                createConfettiPiece();
+            }
+        }
+
+        function createConfettiPiece() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
+            document.body.appendChild(confetti);
+            
+            const animation = confetti.animate([
+                { transform: 'translateY(-100vh) rotate(0deg)', opacity: 1 },
+                { transform: `translateY(100vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+            ], {
+                duration: 2000 + Math.random() * 1000,
+                easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)'
+            });
+            
+            animation.onfinish = () => confetti.remove();
+        }
+
+        // =============================================================================
+        // APPLICATION STATE AND INITIALIZATION
+        // =============================================================================
+
+        let currentState = {
+            mood: 'joy',
+            seed: '',
+            rng: createSeededRNG(''),
+            recommendations: [],
+            palette: [],
+            artStyles: []
+        };
+
+        function initializeApp() {
+            const { canvas, ctx } = initHeroCanvas();
+            
+            // Set up event listeners
+            document.getElementById('moodGrid').addEventListener('click', (e) => {
+                if (e.target.classList.contains('mood-btn')) {
+                    document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentState.mood = e.target.dataset.mood;
+                }
+            });
+            
+            document.getElementById('generateBtn').addEventListener('click', generateRecommendations);
+            document.getElementById('surpriseBtn').addEventListener('click', surpriseMe);
+            
+            document.getElementById('exportJson').addEventListener('click', () => 
+                exportJSON(currentState.recommendations, currentState.palette, currentState.artStyles));
+            document.getElementById('exportPalette').addEventListener('click', () => 
+                exportPalettePNG(currentState.palette));
+            document.getElementById('exportAudio').addEventListener('click', exportAudioWAV);
+            document.getElementById('exportSnapshot').addEventListener('click', exportSnapshot);
+            
+            document.getElementById('playAudio').addEventListener('click', toggleAudio);
+            document.getElementById('pauseBtn').addEventListener('click', toggleAnimation);
+            
+            document.getElementById('showPrompt').addEventListener('click', showAIPrompt);
+            document.getElementById('closeDialog').addEventListener('click', closeDialog);
+            document.getElementById('closeDialog2').addEventListener('click', closeDialog);
+            document.getElementById('copyPrompt').addEventListener('click', copyAIPrompt);
+            
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // Set up keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+            
+            // Initialize with default mood
+            document.querySelector('.mood-btn[data-mood="joy"]').classList.add('active');
+            generateRecommendations();
+            
+            // Start animation
+            animateHeroCanvas(ctx, canvas, currentState.mood, currentState.rng);
+        }
+
+        function generateRecommendations() {
+            const seed = document.getElementById('seedInput').value || Date.now().toString();
+            currentState.seed = seed;
+            currentState.rng = createSeededRNG(currentState.mood + seed);
+            
+            // SIMULATED AI: Generate all recommendations using deterministic logic
+            currentState.recommendations = getSongRecommendations(currentState.mood, currentState.rng);
+            currentState.palette = generateColorPalette(currentState.mood, currentState.rng);
+            currentState.artStyles = getArtStyles(currentState.mood, currentState.rng);
+            
+            updateUI();
+        }
+
+        function surpriseMe() {
+            const moods = ['joy', 'sad', 'calm', 'angry', 'nostalgia', 'romantic'];
+            const randomMood = moods[Math.floor(Math.random() * moods.length)];
+            
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.mood-btn[data-mood="${randomMood}"]`).classList.add('active');
+            
+            currentState.mood = randomMood;
+            document.getElementById('seedInput').value = '';
+            
+            generateRecommendations();
+        }
+
+        function updateUI() {
+            // Update songs
+            const songList = document.getElementById('songList');
+            songList.innerHTML = '';
+            
+            currentState.recommendations.forEach(song => {
+                const songItem = document.createElement('div');
+                songItem.className = 'song-item fade-in';
+                songItem.innerHTML = `
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-meta">
+                        <span>${song.artist}</span>
+                        <span>${song.genre}</span>
+                        <span>${song.mood}</span>
+                    </div>
+                `;
+                songList.appendChild(songItem);
+            });
+            
+            // Update palette
+            const paletteContainer = document.getElementById('paletteContainer');
+            paletteContainer.innerHTML = '';
+            
+            currentState.palette.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch fade-in';
+                swatch.style.background = color;
+                swatch.textContent = color;
+                swatch.addEventListener('click', () => {
+                    navigator.clipboard.writeText(color);
+                    swatch.textContent = 'Copied!';
+                    setTimeout(() => swatch.textContent = color, 1000);
+                });
+                paletteContainer.appendChild(swatch);
+            });
+            
+            // Update art styles
+            const artStylesContainer = document.getElementById('artStyles');
+            artStylesContainer.innerHTML = '';
+            
+            currentState.artStyles.forEach(style => {
+                const artItem = document.createElement('div');
+                artItem.className = 'art-style-item fade-in';
+                
+                const canvas = document.createElement('canvas');
+                canvas.className = 'art-canvas';
+                canvas.width = 100;
+                canvas.height = 60;
+                
+                const styleName = document.createElement('div');
+                styleName.className = 'art-style-name';
+                styleName.textContent = style;
+                
+                artItem.appendChild(canvas);
+                artItem.appendChild(styleName);
+                artStylesContainer.appendChild(artItem);
+                
+                // Draw the art style
+                drawArtStyle(canvas, style, currentState.rng);
+            });
+        }
+
+        function toggleAudio() {
+            const playBtn = document.getElementById('playAudio');
+            if (currentOscillator) {
+                currentOscillator.stop();
+                currentOscillator = null;
+                playBtn.textContent = '▶️';
+            } else {
+                generateAudio(currentState.mood, currentState.rng);
+                playBtn.textContent = '⏹️';
+            }
+        }
+
+        function toggleAnimation() {
+            const pauseBtn = document.getElementById('pauseBtn');
+            isAnimating = !isAnimating;
+            pauseBtn.textContent = isAnimating ? '⏸️ Pause' : '▶️ Resume';
+        }
+
+        function toggleTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.body.setAttribute('data-theme', newTheme);
+            themeToggle.innerHTML = newTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        function showAIPrompt() {
+            document.getElementById('promptText').textContent = AI_PROMPT;
+            document.getElementById('promptDialog').showModal();
+        }
+
+        function closeDialog() {
+            document.getElementById('promptDialog').close();
+        }
+
+        function copyAIPrompt() {
+            navigator.clipboard.writeText(AI_PROMPT).then(() => {
+                const copyBtn = document.getElementById('copyPrompt');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = originalText, 2000);
+            });
+        }
+
+        function handleKeyboardShortcuts(e) {
+            if (e.target.tagName === 'INPUT') return;
+            
+            switch (e.key) {
+                case 'Enter':
+                    e.preventDefault();
+                    generateRecommendations();
+                    break;
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    surpriseMe();
+                    break;
+                case 'e':
+                case 'E':
+                    e.preventDefault();
+                    exportJSON(currentState.recommendations, currentState.palette, currentState.artStyles);
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    toggleAudio();
+                    break;
+            }
+        }
+
+        // =============================================================================
+        // FALLBACK MESSAGES AND ERROR HANDLING
+        // =============================================================================
+
+        function checkBrowserSupport() {
+            const issues = [];
+            
+            if (!window.AudioContext && !window.webkitAudioContext) {
+                issues.push('Web Audio API is not supported. Audio generation will not work.');
+            }
+            
+            if (!HTMLCanvasElement.prototype.toBlob) {
+                issues.push('Canvas toBlob is not supported. Some export features may not work.');
+            }
+            
+            if (issues.length > 0) {
+                console.warn('Browser compatibility issues:', issues);
+            }
+        }
+
+        // =============================================================================
+        // INITIALIZE APPLICATION
+        // =============================================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            checkBrowserSupport();
+        });
+
+    </script>
+</body>
+</html>
